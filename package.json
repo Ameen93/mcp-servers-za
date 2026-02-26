@@ -7,8 +7,17 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces",
-    "clean": "npm run clean --workspaces"
+    "build": "npm run build --workspace @mcp-servers-za/shared && npm run build --workspace @mcp-servers-za/stitch && npm run build --workspace @mcp-servers-za/jse",
+    "dev:stitch": "npm run dev --workspace @mcp-servers-za/stitch",
+    "dev:jse": "npm run dev --workspace @mcp-servers-za/jse",
+    "clean": "npm run clean --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "site:serve": "python -m http.server 8787 --directory site",
+    "site:serve:pro": "python -m http.server 8787 --directory site"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2",
+    "@types/node": "^22.13.10"
   },
   "license": "MIT"
 }

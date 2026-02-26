@@ -1,20 +1,23 @@
 # Tasks
 
-## Phase 1: Research & Design
+## Phase 1: Foundation (done)
 
-- [ ] 1. Research MCP SDK and server implementation patterns (read official docs + examples)
-- [ ] 2. Research Stitch API documentation — available endpoints, auth flow, sandbox access
-- [ ] 3. Research JSE market data APIs — options, pricing, rate limits
-- [ ] 4. Design Stitch MCP server tool schema (tools: create_payment, check_payment_status, create_vrp_mandate, list_transactions, initiate_refund)
-- [ ] 5. Design JSE MCP server tool schema (tools: get_quote, get_historical, search_instruments, get_sens_announcements)
+- [x] 1. Monorepo structure + TypeScript build chain
+- [x] 2. Stitch MCP package scaffolded
+- [x] 3. JSE MCP package scaffolded
+- [x] 4. Core tool schemas implemented for both servers
 
-## Phase 2: Build
+## Phase 2: Real integrations (next)
 
-- [ ] 6. Scaffold packages/stitch-mcp/ with TypeScript MCP server boilerplate
-- [ ] 7. Scaffold packages/jse-mcp/ with TypeScript MCP server boilerplate
-- [ ] 8. Implement Stitch MCP server core tools
-- [ ] 9. Implement JSE MCP server core tools
+- [ ] 5. Stitch API client (auth, payment create/status, transactions, refunds)
+- [ ] 6. JSE data provider selection (licensed source) + client implementation
+- [ ] 7. Normalize error handling + retry/rate-limit strategy
+- [ ] 8. Add unit tests for tool handlers
+- [ ] 9. Add integration tests with mocked provider responses
 
-## Phase 3: Publish
+## Phase 3: Productization
 
-- [ ] 10. Register both servers on official MCP Registry (registry.modelcontextprotocol.io)
+- [ ] 10. Premium feature gating (license key + middleware)
+- [ ] 11. Registry metadata + publishing pipeline
+- [ ] 12. Docs: install snippets for Claude Desktop / Cursor / other MCP clients
+- [ ] 13. Launch page + usage examples + pricing page draft
