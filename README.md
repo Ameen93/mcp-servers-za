@@ -48,6 +48,14 @@ Run JSE server (stdio MCP):
 npm run dev:jse
 ```
 
+## Testing
+
+```bash
+npm test
+```
+
+**Current strategy:** Placeholder script that exits 0. No test framework is configured yet. As real API integrations land, we'll add a proper test runner (likely Vitest) with unit tests per package. The placeholder ensures CI pipelines and ops scans don't hard-fail on a missing `test` script.
+
 ## Notes
 
 The current implementation intentionally returns structured stub payloads so:

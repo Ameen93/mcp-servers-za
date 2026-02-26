@@ -13,7 +13,8 @@
     "clean": "npm run clean --workspaces",
     "typecheck": "npm run typecheck --workspaces",
     "site:serve": "python -m http.server 8787 --directory site",
-    "site:serve:pro": "python -m http.server 8787 --directory site"
+    "site:serve:pro": "python -m http.server 8787 --directory site",
+    "test": "echo \"No tests yet — placeholder\" && exit 0"
   },
   "devDependencies": {
     "typescript": "^5.9.2",
