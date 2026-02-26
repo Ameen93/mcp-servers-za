@@ -1,0 +1,14 @@
+{
+  "name": "mcp-servers-za",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Collection of MCP servers for South African services",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "clean": "npm run clean --workspaces"
+  },
+  "license": "MIT"
+}
