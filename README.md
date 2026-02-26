@@ -10,19 +10,21 @@
 - ⏳ Real API integrations pending
 - ⏳ MCP Registry publishing pending
 
-## Packages
+## Package map
 
-- `@mcp-servers-za/stitch`
+- `packages/shared` → `@mcp-servers-za/shared` (shared types/utilities)
+- `packages/stitch` → `@mcp-servers-za/stitch` (Stitch MCP server)
   - `create_payment`
   - `check_payment_status`
   - `create_vrp_mandate`
   - `list_transactions`
   - `initiate_refund`
-- `@mcp-servers-za/jse`
+- `packages/jse` → `@mcp-servers-za/jse` (JSE MCP server)
   - `get_quote`
   - `get_historical`
   - `search_instruments`
   - `get_sens_announcements`
+- `site/` → static docs/landing page scaffold
 
 ## Quick start
 
