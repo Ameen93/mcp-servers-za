@@ -14,11 +14,12 @@
     "typecheck": "npm run typecheck --workspaces",
     "site:serve": "python -m http.server 8787 --directory site",
     "site:serve:pro": "python -m http.server 8787 --directory site",
-    "test": "echo \"No tests yet — placeholder\" && exit 0"
+    "test": "vitest run"
   },
   "devDependencies": {
+    "@types/node": "^22.13.10",
     "typescript": "^5.9.2",
-    "@types/node": "^22.13.10"
+    "vitest": "^4.0.18"
   },
   "license": "MIT"
 }

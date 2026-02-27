@@ -2,134 +2,209 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { isoNow, optionalEnv, requiredEnv } from "@mcp-servers-za/shared";
+import { isoNow, requiredEnv, AlphaVantageClient } from "@mcp-servers-za/shared";
 
-const jseApiKey = requiredEnv("JSE_API_KEY");
-const jseBaseUrl = optionalEnv("JSE_BASE_URL", "https://example-jse-provider.local");
+const avClient = new AlphaVantageClient({
+  apiKey: requiredEnv("ALPHA_VANTAGE_API_KEY"),
+});
 
 const server = new McpServer({
   name: "jse-market-data",
-  version: "0.1.0"
+  version: "0.1.0",
 });
+
+function errorResponse(err: unknown): { content: Array<{ type: "text"; text: string }> } {
+  const message = err instanceof Error ? err.message : String(err);
+  const hint =
+    err instanceof Error && err.name === "AlphaVantageRateLimitError"
+      ? "\n\nHint: Alpha Vantage free tier allows 5 requests/minute and 500/day. Please wait a moment and try again."
+      : "";
+  return {
+    content: [{ type: "text", text: `Error: ${message}${hint}` }],
+  };
+}
+
+// ── Get Quote ───────────────────────────────────────────────────────────────
 
 server.registerTool(
   "get_quote",
   {
     title: "Get quote",
-    description: "Get latest quote for a JSE instrument ticker",
+    description:
+      "Get the latest quote for a JSE-listed instrument. Use the JSE ticker (e.g. NPN, SOL, AGL).",
     inputSchema: {
-      ticker: z.string().min(1)
-    }
+      ticker: z.string().min(1).describe("JSE ticker symbol e.g. NPN, SOL, AGL"),
+    },
   },
   async ({ ticker }) => {
-    const payload = {
-      provider: "jse",
-      action: "get_quote",
-      ticker: ticker.toUpperCase(),
-      priceZar: 123.45,
-      changePct: 0.82,
-      asOf: isoNow(),
-      note: "Stub response. Hook into chosen JSE data provider."
-    };
+    try {
+      const quote = await avClient.getQuote(ticker);
 
-    return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                provider: "jse",
+                action: "get_quote",
+                ticker: ticker.toUpperCase(),
+                symbol: quote.symbol,
+                priceZar: quote.price,
+                openZar: quote.open,
+                highZar: quote.high,
+                lowZar: quote.low,
+                volume: quote.volume,
+                previousCloseZar: quote.previousClose,
+                changeZar: quote.change,
+                changePercent: quote.changePercent,
+                latestTradingDay: quote.latestTradingDay,
+                asOf: isoNow(),
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    } catch (err) {
+      return errorResponse(err);
+    }
   }
 );
+
+// ── Get Historical ──────────────────────────────────────────────────────────
 
 server.registerTool(
   "get_historical",
   {
     title: "Get historical prices",
-    description: "Retrieve OHLCV history for a ticker",
+    description: "Retrieve daily OHLCV history for a JSE ticker",
     inputSchema: {
       ticker: z.string().min(1),
-      days: z.number().int().positive().max(3650).default(30)
-    }
+      days: z.number().int().positive().max(3650).default(30),
+      outputSize: z
+        .enum(["compact", "full"])
+        .default("compact")
+        .describe("compact=100 days, full=20+ years"),
+    },
   },
-  async ({ ticker, days }) => {
-    const history = Array.from({ length: Math.min(days, 5) }).map((_, i) => ({
-      date: new Date(Date.now() - i * 86400000).toISOString().slice(0, 10),
-      open: 120 + i,
-      high: 123 + i,
-      low: 119 + i,
-      close: 122 + i,
-      volume: 100000 + i * 1000
-    }));
+  async ({ ticker, days, outputSize }) => {
+    try {
+      const bars = await avClient.getHistorical(ticker, outputSize);
+      const limited = bars.slice(0, days);
 
-    const payload = {
-      provider: "jse",
-      action: "get_historical",
-      ticker: ticker.toUpperCase(),
-      points: history.length,
-      history,
-      note: "Stub response. Replace with live historical feed."
-    };
-
-    return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                provider: "jse",
+                action: "get_historical",
+                ticker: ticker.toUpperCase(),
+                points: limited.length,
+                currency: "ZAR",
+                history: limited,
+                asOf: isoNow(),
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    } catch (err) {
+      return errorResponse(err);
+    }
   }
 );
+
+// ── Search Instruments ──────────────────────────────────────────────────────
 
 server.registerTool(
   "search_instruments",
   {
     title: "Search instruments",
-    description: "Search JSE instruments by name/ticker text",
+    description: "Search for JSE-listed instruments by name or ticker",
     inputSchema: {
-      query: z.string().min(1)
-    }
+      query: z.string().min(1),
+    },
   },
   async ({ query }) => {
-    const payload = {
-      provider: "jse",
-      action: "search_instruments",
-      query,
-      results: [
-        { ticker: "NPN", name: "Naspers Ltd", type: "equity" },
-        { ticker: "AGL", name: "Anglo American plc", type: "equity" }
-      ].filter((x) => `${x.ticker} ${x.name}`.toLowerCase().includes(query.toLowerCase())),
-      note: "Stub response. Replace with provider search endpoint."
-    };
+    try {
+      const results = await avClient.searchInstruments(query);
 
-    return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                provider: "jse",
+                action: "search_instruments",
+                query,
+                count: results.length,
+                results,
+                note:
+                  results.length === 0
+                    ? "No JSE instruments found. Try a broader search term, or note that Alpha Vantage may not cover all JSE-listed instruments."
+                    : undefined,
+                asOf: isoNow(),
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    } catch (err) {
+      return errorResponse(err);
+    }
   }
 );
+
+// ── SENS Announcements ──────────────────────────────────────────────────────
 
 server.registerTool(
   "get_sens_announcements",
   {
     title: "Get SENS announcements",
-    description: "Fetch latest SENS announcements",
+    description: "Get latest SENS (Stock Exchange News Service) announcements from the JSE",
     inputSchema: {
       ticker: z.string().optional(),
-      limit: z.number().int().positive().max(50).default(10)
-    }
+      limit: z.number().int().positive().max(50).default(10),
+    },
   },
-  async ({ ticker, limit }) => {
-    const base = [
-      { id: "sens_1", ticker: "NPN", headline: "Trading statement", publishedAt: isoNow() },
-      { id: "sens_2", ticker: "SBK", headline: "Results announcement", publishedAt: isoNow() }
-    ];
-
-    const items = base
-      .filter((x) => (ticker ? x.ticker === ticker.toUpperCase() : true))
-      .slice(0, limit);
-
-    const payload = {
-      provider: "jse",
-      action: "get_sens_announcements",
-      count: items.length,
-      announcements: items,
-      note: "Stub response. Replace with SENS feed integration."
+  async () => {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              provider: "jse",
+              action: "get_sens_announcements",
+              status: "not_available",
+              message:
+                "SENS announcements are not available through the free Alpha Vantage API. " +
+                "To access SENS data, consider:\n" +
+                "1. Visit https://www.sharenet.co.za/sens for free browsing\n" +
+                "2. Use the JSE direct data feed (requires commercial license)\n" +
+                "3. Use ProfileData or Infront as a premium data provider\n\n" +
+                "This feature will be available in a future premium tier.",
+              asOf: isoNow(),
+            },
+            null,
+            2
+          ),
+        },
+      ],
     };
-
-    return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
   }
 );
 
 async function main() {
-  void jseApiKey;
-  void jseBaseUrl;
-
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }

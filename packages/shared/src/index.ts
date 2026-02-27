@@ -20,3 +20,9 @@ export function optionalEnv(name: string, fallback = ""): string {
 export function isoNow(): string {
   return new Date().toISOString();
 }
+
+export { StitchClient, type StitchClientConfig } from "./stitch-client.js";
+export { AlphaVantageClient, type AlphaVantageConfig } from "./alpha-vantage-client.js";
+export { Cache } from "./cache.js";
+export { RateLimiter } from "./rate-limiter.js";
+export { fetchWithRetry, type FetchOptions } from "./fetch-utils.js";
