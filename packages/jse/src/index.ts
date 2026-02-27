@@ -3,6 +3,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { isoNow, requiredEnv, AlphaVantageClient } from "@mcp-servers-za/shared";
+import { registerGetSharePrice } from "./get-share-price.js";
+import { MockSharePriceSource } from "./mock-share-price-source.js";
 
 const avClient = new AlphaVantageClient({
   apiKey: requiredEnv("ALPHA_VANTAGE_API_KEY"),
@@ -23,6 +25,9 @@ function errorResponse(err: unknown): { content: Array<{ type: "text"; text: str
     content: [{ type: "text", text: `Error: ${message}${hint}` }],
   };
 }
+
+// ── Get Share Price (configurable data source) ──────────────────────────────
+registerGetSharePrice(server, new MockSharePriceSource());
 
 // ── Get Quote ───────────────────────────────────────────────────────────────
 
