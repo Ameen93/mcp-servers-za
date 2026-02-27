@@ -1,21 +1,56 @@
 {
   "name": "@mcp-servers-za/stitch",
   "version": "0.1.0",
-  "description": "Stitch Payments MCP server for South African payment workflows",
+  "description": "MCP server for Stitch payments in South Africa",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "bin": {
-    "mcp-servers-za-stitch": "dist/index.js"
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
   },
+  "bin": {
+    "mcp-servers-za-stitch": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "node --watch --enable-source-maps src/index.ts",
     "clean": "rm -rf dist",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "smoke:fresh": "node ./scripts/smoke-fresh-install.mjs"
   },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "stitch",
+    "payments",
+    "south-africa"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ameen93/mcp-servers-za.git",
+    "directory": "packages/stitch"
+  },
+  "bugs": {
+    "url": "https://github.com/Ameen93/mcp-servers-za/issues"
+  },
+  "homepage": "https://github.com/Ameen93/mcp-servers-za/tree/main/packages/stitch#readme",
   "dependencies": {
-    "@mcp-servers-za/shared": "file:../shared",
     "@modelcontextprotocol/sdk": "^1.17.1",
     "zod": "^3.23.8"
   }
