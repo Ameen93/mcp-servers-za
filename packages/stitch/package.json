@@ -13,7 +13,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "mcp-servers-za-stitch": "./dist/index.js"
+    "mcp-servers-za-stitch": "dist/index.js"
   },
   "files": [
     "dist",
