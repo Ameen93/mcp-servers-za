@@ -67,5 +67,4 @@ Vitest with globals enabled (no imports needed for `describe`, `it`, `expect`, `
 This project is tracked in the Obsidian vault at `/home/ameen/projects/`:
 - **Project note:** `_notes/mcp-servers-za.md` — high-level status and notes
 - **Dashboard:** `_index.md` — overview of all projects
-- **Registry:** `projects.yaml` — metadata, status, relationships
 - **Related:** mcpideas
