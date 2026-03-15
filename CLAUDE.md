@@ -61,3 +61,11 @@ Base config in `tsconfig.base.json`: target ES2022, module NodeNext, strict mode
 ## Testing
 
 Vitest with globals enabled (no imports needed for `describe`, `it`, `expect`, `vi`). Tests live alongside source as `*.test.ts`. Uses `vi.useFakeTimers()` for time-dependent tests and fetch mocking for HTTP tests.
+
+## Obsidian Vault Context
+
+This project is tracked in the Obsidian vault at `/home/ameen/projects/`:
+- **Project note:** `_notes/mcp-servers-za.md` — high-level status and notes
+- **Dashboard:** `_index.md` — overview of all projects
+- **Registry:** `projects.yaml` — metadata, status, relationships
+- **Related:** mcpideas
