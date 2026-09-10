@@ -1,111 +1,60 @@
 # MCP Servers ZA 🇿🇦
 
-A collection of [Model Context Protocol](https://modelcontextprotocol.io/) servers for South African services.
+Model Context Protocol servers for South African financial rails, built on the assumption that an agent holding a payment tool will eventually be asked to do something it should refuse.
 
-## Servers
+Most MCP servers are a thin wrapper over an API. That is fine for reading a calendar. It is not fine for moving money, where the interesting questions are what the tool refuses, what it does twice, and what it can prove afterwards. This repo is an attempt to answer those three questions in public, with tests.
 
-### Stitch Payments (`@mcp-servers-za/stitch`)
+## What is here today
 
-MCP server for [Stitch](https://stitch.money) payment operations:
+A TypeScript monorepo, npm workspaces, strict TS, vitest.
 
-- **create_payment** — Initiate a Pay By Bank payment request
-- **check_payment_status** — Look up payment status by ID
-- **list_transactions** — List recent payment initiation requests
-- **initiate_refund** — Refund a completed payment
-- **create_debicheck_mandate** — Guidance for recurring payment setup
+| Package | What it is | Tools |
+|---|---|---|
+| `@mcp-servers-za/stitch` | MCP server over stdio for [Stitch](https://stitch.money) payments | `create_payment`, `check_payment_status`, `list_transactions`, `initiate_refund`, `create_debicheck_mandate` |
+| `@mcp-servers-za/jse` | MCP server over stdio for JSE market data | `get_quote`, `get_historical`, `search_instruments`, `get_sens_announcements` |
+| `@mcp-servers-za/shared` | The parts that are easy to get wrong | HTTP client with retry, token-bucket rate limiter, response cache, typed API clients |
 
-### JSE Market Data (`@mcp-servers-za/jse`)
-
-MCP server for Johannesburg Stock Exchange market data (via [Alpha Vantage](https://www.alphavantage.co/)):
-
-- **get_quote** — Latest quote for a JSE ticker
-- **get_historical** — Daily OHLCV history
-- **search_instruments** — Search JSE-listed instruments
-- **get_sens_announcements** — SENS info (premium feature placeholder)
-
-## Setup
-
-### Prerequisites
-
-- Node.js 18+
-- npm 9+
-
-### Installation
+Tool inputs are Zod schemas. Responses distinguish a real answer from `not_available`, because a market-data tool that invents a price is worse than one that declines. There are unit tests for the rate limiter, cache, fetch layer and both API clients, plus integration tests that run the servers against recorded HTTP responses.
 
 ```bash
-git clone https://github.com/your-org/mcp-servers-za.git
-cd mcp-servers-za
 npm install
 npm run build
+npm test
+npm run dev:stitch      # or dev:jse
 ```
 
-### Configuration
+Credentials go in `.env`; see `.env.example`. Neither server needs credentials to run its tests.
 
-Copy `.env.example` to `.env` and fill in your credentials:
+## What is deliberately not here yet
 
-```bash
-cp .env.example .env
-```
+Being early is not the same as being vague, so the gaps are listed rather than implied.
 
-**Stitch:** Get your `client_id` and `client_secret` from the [Stitch Dashboard](https://dashboard.stitch.money).
+- **Live API integration.** The client layer is real and tested against recorded responses. It has not yet been run against production Stitch or JSE credentials.
+- **The trust core.** The design is settled and the code is next: policy limits enforced server-side, an idempotency store so a replayed call returns the first result rather than a second payment, an append-only hash-chained audit log, and a hard separation between a dry run that returns a preview and an execute that requires an explicit approval step.
+- **The eval suite.** A public, runnable set of graded tasks: what the agent does when a tool result tries to talk it into a refund it was never asked for, when a limit is exceeded, when a webhook arrives twice, when the rail returns a partial failure. Passing rates published in this README, including the failures.
+- **Registry publishing.** Not until the above holds.
 
-**Alpha Vantage:** Get a free API key at [alphavantage.co/support](https://www.alphavantage.co/support/#api-key). Free tier: 5 requests/minute, 500/day.
+## Roadmap
 
-### Running
+| Date | Milestone |
+|---|---|
+| 22 Sep 2026 | `v0.1`: CI on main, one runnable read-only tool end to end, install instructions that work from a clean clone |
+| 9 Oct 2026 | `v0.2`: the trust core above, a mock rail with inspectable state, contract tests, and the first published eval results |
 
-```bash
-# Stitch MCP server
-STITCH_CLIENT_ID=xxx STITCH_CLIENT_SECRET=yyy node packages/stitch/dist/index.js
+## Why South African rails
 
-# JSE MCP server
-ALPHA_VANTAGE_API_KEY=zzz node packages/jse/dist/index.js
-```
+Because nobody else is building them, and because the constraints here are specific: DebiCheck mandates, the National Credit Act, POPIA, and a payments landscape where the useful integrations are Stitch, Peach, Ozow and the card acquirers rather than Stripe. Agent tooling written for US rails does not transfer cleanly.
 
-### Claude Desktop / Cursor Configuration
+## Design notes
 
-Add to your MCP client config:
+- **Read and write tools are separate surfaces.** A read tool can be given away freely; a write tool cannot.
+- **Dry run is the default.** Execute is an explicit, separately named operation.
+- **Idempotency is required, not optional.** A caller without a key gets an error, not a payment.
+- **Every refusal has a reason code** and lands in the audit log next to the request that caused it.
+- **Nothing is logged that should not be.** Account numbers and personal data are masked at the boundary.
 
-```json
-{
-  "mcpServers": {
-    "stitch-payments": {
-      "command": "node",
-      "args": ["/path/to/mcp-servers-za/packages/stitch/dist/index.js"],
-      "env": {
-        "STITCH_CLIENT_ID": "your-client-id",
-        "STITCH_CLIENT_SECRET": "your-client-secret"
-      }
-    },
-    "jse-market-data": {
-      "command": "node",
-      "args": ["/path/to/mcp-servers-za/packages/jse/dist/index.js"],
-      "env": {
-        "ALPHA_VANTAGE_API_KEY": "your-api-key"
-      }
-    }
-  }
-}
-```
+## Status
 
-## Development
+Pre-release and moving. Interfaces will change until `v0.2`. Issues and opinions welcome, particularly from anyone who has run payment integrations in South Africa and knows where the bodies are.
 
-```bash
-npm run build      # Build all packages
-npm test           # Run tests (vitest)
-npm run typecheck   # Type check without emitting
-```
-
-## Architecture
-
-```
-packages/
-  shared/     — Common utilities (HTTP client, cache, rate limiter, API clients)
-  stitch/     — Stitch Payments MCP server
-  jse/        — JSE Market Data MCP server
-  stitch-mcp/ — (Legacy wrapper, unused)
-  jse-mcp/    — (Legacy wrapper, unused)
-```
-
-## License
-
-MIT
+MIT licensed. Built by [Ameen Solomon](https://github.com/Ameen93), Cape Town.
